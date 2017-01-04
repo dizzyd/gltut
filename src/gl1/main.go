@@ -64,12 +64,12 @@ func main() {
 	_, vao2 := initTriangle(t2)
 
 	// Load up a program
-	p1, err := compileProgram("vert1.glsl", "frag1.glsl")
+	p1, err := compileProgram("shaders/vert1.glsl", "shaders/frag1.glsl")
 	if err != nil {
 		panic(err)
 	}
 
-	p2, err := compileProgram("vert1.glsl", "frag2.glsl")
+	p2, err := compileProgram("shaders/vert1.glsl", "shaders/frag2.glsl")
 	if err != nil {
 		panic(err)
 	}
