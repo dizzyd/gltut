@@ -69,7 +69,7 @@ func main() {
 		panic(err)
 	}
 
-	p2, err := compileProgram("shaders/vert1.glsl", "shaders/frag2.glsl")
+	p2, err := compileProgram("shaders/vert1.glsl", "shaders/frag1a.glsl")
 	if err != nil {
 		panic(err)
 	}
