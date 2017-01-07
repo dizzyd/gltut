@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"runtime"
 	"strings"
+	"unsafe"
 
 	"io/ioutil"
 
@@ -12,9 +14,9 @@ import (
 )
 
 var t1 = []float32{
-	-0.25, -0.25, 0.0,
-	0.25, -0.25, 0.0,
-	0.0, 0.25, 0.0,
+	-0.25, -0.25, 0.0, 1.0, 0.0, 0.0,
+	0.25, -0.25, 0.0, 0.0, 1.0, 0.0,
+	0.0, 0.25, 0.0, 0.0, 0.0, 1.0,
 }
 
 func keyCallback(w *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
@@ -62,13 +64,20 @@ func main() {
 		panic(err)
 	}
 
+	gl.UseProgram(p1)
+
+	horizOffsetStr := gl.Str("horizOffset\x00")
+	horizOffsetLoc := gl.GetUniformLocation(p1, horizOffsetStr)
+
 	for !window.ShouldClose() {
 		glfw.PollEvents()
 
 		gl.ClearColor(0.3, 0.3, 0.3, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		gl.UseProgram(p1)
+		timeValue := glfw.GetTime()
+		horizOffset := float32((math.Sin(timeValue) / 2) + 0.5)
+		gl.Uniform1f(horizOffsetLoc, horizOffset)
 
 		gl.BindVertexArray(vao1)
 		gl.DrawArrays(gl.TRIANGLES, 0, 3)
@@ -77,6 +86,7 @@ func main() {
 
 		window.SwapBuffers()
 	}
+
 }
 
 func initTriangle(vertices []float32) (uint32, uint32) {
@@ -88,8 +98,13 @@ func initTriangle(vertices []float32) (uint32, uint32) {
 	gl.BindVertexArray(vao)
 	gl.BindBuffer(gl.ARRAY_BUFFER, vbo)
 	gl.BufferData(gl.ARRAY_BUFFER, len(vertices)*4, gl.Ptr(vertices), gl.STATIC_DRAW)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 12, nil)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 6*4 /*sizeof(float32)*/, nil)
 	gl.EnableVertexAttribArray(0)
+
+	offsetPtr := unsafe.Pointer(uintptr(3 * 4))
+	gl.VertexAttribPointer(1, 3, gl.FLOAT, false, 6*4 /*sizeof(float32)*/, offsetPtr)
+	gl.EnableVertexAttribArray(1)
+
 	gl.BindVertexArray(0)
 	return vbo, vao
 }
@@ -157,5 +172,6 @@ func compileShader(sourceFilename string, shaderType uint32) (uint32, error) {
 		return 0, fmt.Errorf("Failed to compile shader %s: %v", sourceFilename, log)
 	}
 
+	fmt.Printf("Loaded shader: %s\n", sourceFilename)
 	return shader, nil
 }
